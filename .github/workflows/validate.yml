@@ -1,0 +1,68 @@
+# Validate — the required `validate` check of the plugin mirror.
+#
+# Runs Claude Code's own plugin validator over the repository and checks the
+# portable plugin manifest and MCP configuration against their published JSON
+# schemas. It reads the repository and holds no secret.
+
+name: Validate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install Claude Code
+        run: npm install --global @anthropic-ai/claude-code@2.1.309
+
+      - name: Validate the marketplace and the plugin
+        run: |
+          claude plugin validate .
+          claude plugin validate plugins/openlatch
+
+      - name: Check the manifests against their JSON schemas
+        run: |
+          python -m pip install --quiet jsonschema==4.23.0
+          python - <<'PY'
+          import json
+          import urllib.request
+          from pathlib import Path
+
+          import jsonschema
+
+          # The schema is fixed here, never taken from the document under test.
+          SCHEMAS = {
+              "plugin.json": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+              "mcp.json": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+          }
+          for name, url in SCHEMAS.items():
+              path = Path("plugins/openlatch") / name
+              document = json.loads(path.read_text(encoding="utf-8"))
+              if document.get("$schema") != url:
+                  raise SystemExit(f"{path}: $schema must be {url}")
+              with urllib.request.urlopen(url, timeout=30) as response:
+                  schema = json.load(response)
+              jsonschema.validate(document, schema)
+              print(f"{path}: valid against {url}")
+          PY

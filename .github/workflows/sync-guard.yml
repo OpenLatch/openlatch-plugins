@@ -1,0 +1,55 @@
+# Sync Guard — the required `sync-guard` check of the plugin mirror.
+#
+# A sync PR (head `skills-sync/<version>` in this repository) may merge itself only when the
+# release GitHub App opened it and it touches nothing but the generated paths. Any other PR passes
+# when it leaves those paths alone; one that changes them needs a maintainer's approval on its
+# current head commit, then a re-run of this check.
+#
+# The script is the website's guard (tools/sync-guard.mjs), copied here at bootstrap so one
+# reviewed implementation runs on both destinations; only the allowlist differs.
+#
+# SECURITY: `pull_request_target` runs the default branch's definition with a token. This workflow
+# NEVER checks out or executes the PR's code — it checks out the base commit, and the script only
+# reads the PR's metadata, files and reviews through the REST API. It holds no secret. Do not add
+# an `actions/checkout` of the head, and never put an event expression inside a `run:` script
+# (pass it through `env:`).
+#
+# The job name `sync-guard` is the required-check name in the ruleset (bound to the GitHub
+# Actions integration, so a spoofed status of the same name does not count).
+
+name: Sync Guard
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions: {}
+
+jobs:
+  sync-guard:
+    name: sync-guard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Judge the pull request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SYNC_GUARD_ALLOWLIST: |
+            .claude-plugin/**
+            .agents/**
+            plugins/**
+          SYNC_GUARD_APP_LOGIN: openlatch-release-bot[bot]
+        run: node .github/sync-guard/sync-guard.mjs

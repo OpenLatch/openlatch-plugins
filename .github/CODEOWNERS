@@ -1,0 +1,7 @@
+# Code-owner review applies to the hand-maintained files only. The generated paths
+# (.claude-plugin/, .agents/, plugins/) have no owner: sync pull requests are
+# opened by the release GitHub App and guarded by the `sync-guard` check.
+/.github/     @OpenLatch/openlatch-maintainers
+/README.md    @OpenLatch/openlatch-maintainers
+/LICENSE      @OpenLatch/openlatch-maintainers
+/SECURITY.md  @OpenLatch/openlatch-maintainers
