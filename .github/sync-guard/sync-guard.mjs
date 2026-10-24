@@ -7,8 +7,9 @@
 //               release GitHub App opened it, every changed path (and, for a rename, its
 //               previous path) is in the allowlist, and nothing under `.github/` changes;
 //   any other   passes when no changed path is in the allowlist or the protected list; one that
-//               touches either passes only with an approving review of a maintainer on its
-//               current head commit.
+//               touches either passes only with an approving review on its current head commit
+//               from a maintainer who neither opened the PR nor authored or committed any of
+//               its commits.
 //
 // It runs on `pull_request_target`, so the definition that runs is the default branch's, never
 // the PR's. It reads the PR, its files, its reviews and the reviewers' permission through the
@@ -36,6 +37,7 @@ const MAX_PAGES = 40;
 /**
  * @typedef {{ filename: string, previous_filename?: string }} PrFile
  * @typedef {{ user: { login: string } | null, state: string, commit_id?: string }} PrReview
+ * @typedef {{ author: { login: string } | null, committer: { login: string } | null }} PrCommit
  * @typedef {{
  *   user: { login: string } | null,
  *   head: { ref: string, sha: string, repo: { full_name: string } | null },
@@ -68,11 +70,13 @@ const norm = (login) => (login ?? "").toLowerCase();
  *   files: PrFile[],
  *   reviews: PrReview[],
  *   permissions: Record<string, string>,
+ *   commits?: PrCommit[],
  *   allowlist: string[],
  *   protectedPaths?: string[],
  *   appLogin: string,
  * }} input `reviews` oldest first; `permissions` maps a reviewer's login to the repository
- *   permission level (`admin`, `maintain`, `write`, `triage`, `read`, `none`); `protectedPaths`
+ *   permission level (`admin`, `maintain`, `write`, `triage`, `read`, `none`); `commits` are the
+ *   PR's commits, whose authors and committers cannot approve it; `protectedPaths`
  *   are hand-maintained paths a non-sync PR may change only with a maintainer's review
  * @returns {Verdict}
  */
@@ -81,6 +85,7 @@ export function judge({
 	files,
 	reviews,
 	permissions,
+	commits = [],
 	allowlist,
 	protectedPaths = [],
 	appLogin,
@@ -119,12 +124,19 @@ export function judge({
 			if (r.state !== "APPROVED" && r.state !== "CHANGES_REQUESTED") continue;
 			if (r.user) latest.set(norm(r.user.login), r);
 		}
+		const contributors = new Set(
+			commits
+				.flatMap((c) => [c.author?.login, c.committer?.login])
+				.filter(Boolean)
+				.map(norm),
+		);
 		const blocked = [...latest.entries()].filter(([, r]) => r.state === "CHANGES_REQUESTED");
 		const approved = [...latest.entries()].filter(
 			([login, r]) =>
 				r.state === "APPROVED" &&
 				r.commit_id === pr.head.sha &&
 				login !== norm(pr.user?.login) &&
+				!contributors.has(login) &&
 				MAINTAINER.has(perms[login] ?? "none"),
 		);
 		if (blocked.length > 0)
@@ -197,6 +209,7 @@ export async function run(env = process.env) {
 	const pr = await get(api, token, base);
 	const files = await list(api, token, `${base}/files`);
 	const reviews = await list(api, token, `${base}/reviews`);
+	const commits = await list(api, token, `${base}/commits`);
 
 	/** @type {Record<string, string>} */
 	const permissions = {};
@@ -215,6 +228,7 @@ export async function run(env = process.env) {
 		files,
 		reviews,
 		permissions,
+		commits,
 		allowlist,
 		protectedPaths: parseAllowlist(env.SYNC_GUARD_PROTECTED),
 		appLogin: env.SYNC_GUARD_APP_LOGIN ?? "",
