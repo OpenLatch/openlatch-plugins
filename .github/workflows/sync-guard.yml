@@ -2,11 +2,11 @@
 #
 # A sync PR (head `skills-sync/<version>` in this repository) may merge itself only when the
 # release GitHub App opened it and it touches nothing but the generated paths. Any other PR passes
-# when it leaves those paths alone; one that changes them needs a maintainer's approval on its
-# current head commit, then a re-run of this check.
+# when it leaves the generated and the protected paths alone; one that changes them needs a
+# maintainer's approval on its current head commit, then a re-run of this check.
 #
-# The script is the website's guard (tools/sync-guard.mjs), copied here at bootstrap so one
-# reviewed implementation runs on both destinations; only the allowlist differs.
+# Every destination of the skills sync runs an identical copy of the script; only the allowlist
+# and the protected list differ.
 #
 # SECURITY: `pull_request_target` runs the default branch's definition with a token. This workflow
 # NEVER checks out or executes the PR's code — it checks out the base commit, and the script only
@@ -34,12 +34,12 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
 
@@ -51,5 +51,10 @@ jobs:
             .claude-plugin/**
             .agents/**
             plugins/**
+          SYNC_GUARD_PROTECTED: |
+            .github/**
+            README.md
+            LICENSE
+            SECURITY.md
           SYNC_GUARD_APP_LOGIN: openlatch-release-bot[bot]
         run: node .github/sync-guard/sync-guard.mjs

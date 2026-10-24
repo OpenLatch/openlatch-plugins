@@ -1,24 +1,27 @@
 // @ts-check
 
-// The `sync-guard` check (API-4-P2 D-3, D-4). A required check on every destination of the
-// skills sync: it decides, from a pull request's metadata alone, whether the PR may merge
-// without a person.
+// The `sync-guard` check. A required check on every destination of the skills sync: it decides,
+// from a pull request's metadata alone, whether the PR may merge without a person.
 //
 //   a sync PR   head branch `skills-sync/<version>` in this repository: passes only when the
 //               release GitHub App opened it, every changed path (and, for a rename, its
 //               previous path) is in the allowlist, and nothing under `.github/` changes;
-//   any other   passes when no changed path is in the allowlist; one that touches the allowlist
-//               passes only with an approving review of a maintainer on its current head commit.
+//   any other   passes when no changed path is in the allowlist or the protected list; one that
+//               touches either passes only with an approving review on its current head commit
+//               from a maintainer who neither opened the PR nor authored or committed any of
+//               its commits.
 //
 // It runs on `pull_request_target`, so the definition that runs is the default branch's, never
 // the PR's. It reads the PR, its files, its reviews and the reviewers' permission through the
 // REST API; it never checks out or executes the PR's code and holds no secret. It fails closed:
 // an API error, or a file list that is not the whole of the PR, is a failure.
 //
-// This file is self-contained on purpose: the mirror repository carries a copy of it (P1 D-14).
+// This file is self-contained on purpose: every destination runs an identical copy of it.
 //
 //   GITHUB_TOKEN, GITHUB_REPOSITORY, PR_NUMBER   the PR to judge
-//   SYNC_GUARD_ALLOWLIST                         globs, comma or newline separated
+//   SYNC_GUARD_ALLOWLIST                         the generated paths: globs, comma or newline separated
+//   SYNC_GUARD_PROTECTED                         optional: hand-maintained paths that need a
+//                                                maintainer's review, same syntax
 //   SYNC_GUARD_APP_LOGIN                         the release App's bot login
 
 import { pathToFileURL } from "node:url";
@@ -34,6 +37,7 @@ const MAX_PAGES = 40;
 /**
  * @typedef {{ filename: string, previous_filename?: string }} PrFile
  * @typedef {{ user: { login: string } | null, state: string, commit_id?: string }} PrReview
+ * @typedef {{ author: { login: string } | null, committer: { login: string } | null }} PrCommit
  * @typedef {{
  *   user: { login: string } | null,
  *   head: { ref: string, sha: string, repo: { full_name: string } | null },
@@ -66,13 +70,26 @@ const norm = (login) => (login ?? "").toLowerCase();
  *   files: PrFile[],
  *   reviews: PrReview[],
  *   permissions: Record<string, string>,
+ *   commits?: PrCommit[],
  *   allowlist: string[],
+ *   protectedPaths?: string[],
  *   appLogin: string,
  * }} input `reviews` oldest first; `permissions` maps a reviewer's login to the repository
- *   permission level (`admin`, `maintain`, `write`, `triage`, `read`, `none`)
+ *   permission level (`admin`, `maintain`, `write`, `triage`, `read`, `none`); `commits` are the
+ *   PR's commits, whose authors and committers cannot approve it; `protectedPaths`
+ *   are hand-maintained paths a non-sync PR may change only with a maintainer's review
  * @returns {Verdict}
  */
-export function judge({ pr, files, reviews, permissions, allowlist, appLogin }) {
+export function judge({
+	pr,
+	files,
+	reviews,
+	permissions,
+	commits = [],
+	allowlist,
+	protectedPaths = [],
+	appLogin,
+}) {
 	/** @type {string[]} */
 	const reasons = [];
 	if (files.length !== pr.changed_files)
@@ -83,6 +100,9 @@ export function judge({ pr, files, reviews, permissions, allowlist, appLogin }) 
 	/** @param {PrFile} f */
 	const paths = (f) => [f.filename, f.previous_filename].filter((p) => typeof p === "string");
 	const generated = files.filter((f) => paths(f).some((p) => matches(allowlist, p)));
+	const guarded = files.filter((f) =>
+		paths(f).some((p) => matches(allowlist, p) || matches(protectedPaths, p)),
+	);
 	const isSync =
 		pr.head.ref.startsWith(SYNC_BRANCH_PREFIX) &&
 		pr.head.repo?.full_name === pr.base.repo.full_name;
@@ -96,7 +116,7 @@ export function judge({ pr, files, reviews, permissions, allowlist, appLogin }) 
 			const github = paths(f).find((p) => p === ".github" || p.startsWith(".github/"));
 			if (github !== undefined) reasons.push(`${github} is under .github/`);
 		}
-	} else if (generated.length > 0) {
+	} else if (guarded.length > 0) {
 		const perms = Object.fromEntries(Object.entries(permissions).map(([k, v]) => [norm(k), v]));
 		/** @type {Map<string, PrReview>} */
 		const latest = new Map();
@@ -104,19 +124,26 @@ export function judge({ pr, files, reviews, permissions, allowlist, appLogin }) 
 			if (r.state !== "APPROVED" && r.state !== "CHANGES_REQUESTED") continue;
 			if (r.user) latest.set(norm(r.user.login), r);
 		}
+		const contributors = new Set(
+			commits
+				.flatMap((c) => [c.author?.login, c.committer?.login])
+				.filter(Boolean)
+				.map(norm),
+		);
 		const blocked = [...latest.entries()].filter(([, r]) => r.state === "CHANGES_REQUESTED");
 		const approved = [...latest.entries()].filter(
 			([login, r]) =>
 				r.state === "APPROVED" &&
 				r.commit_id === pr.head.sha &&
 				login !== norm(pr.user?.login) &&
+				!contributors.has(login) &&
 				MAINTAINER.has(perms[login] ?? "none"),
 		);
 		if (blocked.length > 0)
 			reasons.push(`changes are requested by ${blocked.map(([login]) => login).join(", ")}`);
 		if (approved.length === 0)
 			reasons.push(
-				`${generated[0].filename} is a generated path: it needs an approving review from a maintainer on the current head commit; re-run this check after the approval`,
+				`${guarded[0].filename} is a ${generated.length > 0 ? "generated" : "protected"} path: it needs an approving review from a maintainer on the current head commit; re-run this check after the approval`,
 			);
 	}
 	return { pass: reasons.length === 0, reasons };
@@ -182,6 +209,7 @@ export async function run(env = process.env) {
 	const pr = await get(api, token, base);
 	const files = await list(api, token, `${base}/files`);
 	const reviews = await list(api, token, `${base}/reviews`);
+	const commits = await list(api, token, `${base}/commits`);
 
 	/** @type {Record<string, string>} */
 	const permissions = {};
@@ -200,7 +228,9 @@ export async function run(env = process.env) {
 		files,
 		reviews,
 		permissions,
+		commits,
 		allowlist,
+		protectedPaths: parseAllowlist(env.SYNC_GUARD_PROTECTED),
 		appLogin: env.SYNC_GUARD_APP_LOGIN ?? "",
 	});
 }
