@@ -1,7 +1,10 @@
 # Release — publishes the claude.ai archives of each plugin version.
 #
 # Runs on `main` after a sync pull request merged (the push changes the plugin
-# manifest) and on a manual dispatch, which publishes a release that was missed.
+# manifest) and on a manual dispatch. Runs queue one at a time, and a newer run
+# replaces one still pending, so a release can be skipped when syncs land back to
+# back: a dispatch with `ref` set to the commit of main that carried the missed
+# version publishes it.
 # The archives are built here, from the merged tree, so what a customer downloads
 # is made from reviewed files; nothing binary is ever committed. The release is
 # published last, once every archive is attached and checked: with immutable
@@ -19,6 +22,11 @@ on:
     paths:
       - plugins/openlatch/.claude-plugin/plugin.json
   workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit of main to publish; empty publishes the tip of main
+        required: false
+        default: ""
 
 permissions: {}
 
@@ -37,6 +45,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.ref || github.sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       # The archives are built without any token in the environment: nothing the
@@ -44,6 +54,13 @@ jobs:
       - name: Build and check the archives
         run: |
           set -euo pipefail
+
+          # Only a commit of main is ever published.
+          SHA=$(git rev-parse HEAD)
+          if ! git merge-base --is-ancestor "$SHA" origin/main; then
+            echo "::error::$SHA is not a commit of main"
+            exit 1
+          fi
 
           VERSION=$(jq -r '.version // empty' plugins/openlatch/.claude-plugin/plugin.json)
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -65,6 +82,11 @@ jobs:
           (cd plugins/openlatch && zip -X -D -r -y -q "$dist/openlatch-plugin.zip" .)
           for dir in plugins/openlatch/skills/*/; do
             name=$(basename "$dir")
+            # A plain name: never read as a zip option, a pattern or an upload label.
+            if [[ ! "$name" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
+              echo "::error::skill folder name is not lower-case letters, digits and hyphens: $name"
+              exit 1
+            fi
             if [[ "$name" == "openlatch-plugin" ]]; then
               echo "::error::a skill folder cannot be named openlatch-plugin, it would overwrite the plugin archive"
               exit 1
@@ -98,8 +120,8 @@ jobs:
           fi
 
           {
+            echo "SHA=$SHA"
             echo "VERSION=$VERSION"
-            echo "SKILLS=$skills"
             echo "DIST=$dist"
           } >> "$GITHUB_ENV"
 
@@ -122,9 +144,14 @@ jobs:
           fi
           # An existing tag ignores --target: it must already be this commit.
           tag_sha=$(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}" | tail -n1 | cut -f1)
-          if [[ -n "$tag_sha" && "$tag_sha" != "$GITHUB_SHA" ]]; then
-            echo "::error::tag $tag exists at $tag_sha, not at $GITHUB_SHA"
+          if [[ -n "$tag_sha" && "$tag_sha" != "$SHA" ]]; then
+            echo "::error::tag $tag exists at $tag_sha, not at $SHA"
             exit 1
+          fi
+          # The tag is created here, before the draft, so the release can only land on
+          # the commit just built; the tag ruleset forbids moving or deleting a v* tag.
+          if [[ -z "$tag_sha" ]]; then
+            gh api -X POST "repos/$GH_REPO/git/refs" -f ref="refs/tags/$tag" -f sha="$SHA" >/dev/null
           fi
           # Only the highest version becomes the latest release.
           highest=$(jq -r '.[] | select(.isDraft | not) | .tagName | ltrimstr("v")' <<<"$releases" \
@@ -135,13 +162,13 @@ jobs:
           fi
 
           notes="OpenLatch $VERSION. Claude Code: /plugin marketplace add OpenLatch/openlatch-plugins. claude.ai: Customize > Plugins > Add > Add marketplace, or upload an archive below. Codex: a workspace admin imports this repository."
-          gh release create "$tag" --draft --target "$GITHUB_SHA" --title "OpenLatch $VERSION" --notes "$notes"
+          gh release create "$tag" --draft --target "$SHA" --title "OpenLatch $VERSION" --notes "$notes"
           gh release upload "$tag" "$DIST"/*.zip
+          expected=$(cd "$DIST" && find . -maxdepth 1 -name '*.zip' -printf '%f\n' | sort)
           assets=$(gh api "repos/$GH_REPO/releases?per_page=100" \
-            | jq -r --arg t "$tag" '[.[] | select(.tag_name == $t and .draft)] | first | .assets | length')
-          expected=$((SKILLS + 1))
+            | jq -r --arg t "$tag" '[.[] | select(.tag_name == $t and .draft)] | first | .assets[].name' | sort)
           if [[ "$assets" != "$expected" ]]; then
-            echo "::error::the draft $tag holds $assets assets, expected $expected (one per skill plus the plugin); it stays a draft"
+            echo "::error::the draft $tag does not hold exactly the archives built (one per skill plus the plugin); it stays a draft"
             exit 1
           fi
           gh release edit "$tag" --draft=false "$latest"
