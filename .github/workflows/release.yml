@@ -55,10 +55,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Only a commit of main is ever published.
+          # Only a commit that was the tip of main is ever published: its first-parent
+          # line, never a commit of a branch that merged into it.
           SHA=$(git rev-parse HEAD)
-          if ! git merge-base --is-ancestor "$SHA" origin/main; then
-            echo "::error::$SHA is not a commit of main"
+          if ! git rev-list --first-parent origin/main | grep -x -- "$SHA" >/dev/null; then
+            echo "::error::$SHA was never the tip of main"
             exit 1
           fi
 
