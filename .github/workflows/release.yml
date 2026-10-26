@@ -151,6 +151,9 @@ jobs:
           fi
           # The tag is created here, before the draft, so the release can only land on
           # the commit just built; the tag ruleset forbids moving or deleting a v* tag.
+          # A run that dies after this leaves the tag: a re-run of the same commit
+          # resumes, while another commit can never take that version (validate makes
+          # every plugin change raise it), short of an owner lifting the ruleset.
           if [[ -z "$tag_sha" ]]; then
             gh api -X POST "repos/$GH_REPO/git/refs" -f ref="refs/tags/$tag" -f sha="$SHA" >/dev/null
           fi
