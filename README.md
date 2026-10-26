@@ -2,7 +2,7 @@
 
 The OpenLatch plugin for AI coding agents: skills that teach your agent the OpenLatch vocabulary and journeys, plus the MCP server configuration that connects it to your organization.
 
-This repository is a **generated marketplace mirror**. The plugin is built and released by OpenLatch; nothing under `plugins/`, `.claude-plugin/` or `.agents/` is written by hand. Do not open pull requests against those paths.
+This repository is a **generated marketplace mirror**. The plugin is built and released by OpenLatch; nothing under `plugins/`, `.claude-plugin/` or `.agents/` is written by hand, and the release archives are built here from the merged tree. Do not open pull requests against those paths.
 
 ## Install
 
@@ -14,6 +14,12 @@ This repository is a **generated marketplace mirror**. The plugin is built and r
 ```
 
 Update with `/plugin marketplace update openlatch`.
+
+### claude.ai
+
+Open **Customize > Plugins > Add > Add marketplace** and enter `OpenLatch/openlatch-plugins`.
+
+For an organization that blocks personal marketplaces, each [release](https://github.com/OpenLatch/openlatch-plugins/releases) carries archives built from this repository: `openlatch-plugin.zip` for **Upload plugin**, and one `<skill>.zip` per skill for **Customize > Skills**. The latest are at `releases/latest/download/openlatch-plugin.zip` and `releases/latest/download/<skill>.zip`.
 
 ### Codex
 

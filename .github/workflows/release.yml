@@ -1,0 +1,127 @@
+# Release — publishes the claude.ai archives of each plugin version.
+#
+# Runs on `main` after a sync pull request merged (the push changes the plugin
+# manifest) and on a manual dispatch, which publishes a release that was missed.
+# The archives are built here, from the merged tree, so what a customer downloads
+# is made from reviewed files; nothing binary is ever committed. The release is
+# published last, once every archive is attached and checked: with immutable
+# releases on, a published tag and its assets can never change.
+#
+# One archive per skill plus the plugin archive per release:
+#   openlatch-plugin.zip   the contents of plugins/openlatch/ (Upload plugin)
+#   <skill>.zip            one skill folder each (Customize > Skills)
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - plugins/openlatch/.claude-plugin/plugin.json
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  release:
+    name: release
+    # A dispatch from any other branch publishes nothing.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build, check and publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          VERSION=$(jq -r '.version // empty' plugins/openlatch/.claude-plugin/plugin.json)
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::the plugin version is not a plain semver: $VERSION"
+            exit 1
+          fi
+          tag="v$VERSION"
+
+          releases=$(gh release list --limit 100 --json tagName,isDraft)
+          if jq -e --arg t "$tag" '.[] | select(.tagName == $t and (.isDraft | not))' <<<"$releases" >/dev/null; then
+            echo "::notice::release $tag already exists; nothing to do"
+            exit 0
+          fi
+          # A draft left by an interrupted run is rebuilt from scratch.
+          if jq -e --arg t "$tag" '.[] | select(.tagName == $t and .isDraft)' <<<"$releases" >/dev/null; then
+            gh release delete "$tag" --yes
+          fi
+          # An existing tag ignores --target: it must already be this commit.
+          tag_sha=$(git ls-remote origin "refs/tags/$tag" "refs/tags/$tag^{}" | tail -n1 | cut -f1)
+          if [[ -n "$tag_sha" && "$tag_sha" != "$GITHUB_SHA" ]]; then
+            echo "::error::tag $tag exists at $tag_sha, not at $GITHUB_SHA"
+            exit 1
+          fi
+          # Only the highest version becomes the latest release.
+          highest=$(jq -r '.[] | select(.isDraft | not) | .tagName | ltrimstr("v")' <<<"$releases" \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || true)
+          latest="--latest=false"
+          if [[ -z "$highest" || "$(printf '%s\n%s\n' "$VERSION" "$highest" | sort -V | tail -n1)" == "$VERSION" ]]; then
+            latest="--latest"
+          fi
+
+          dist="$RUNNER_TEMP/dist"
+          rm -rf "$dist"
+          mkdir -p "$dist"
+          (cd plugins/openlatch && zip -X -D -r -q "$dist/openlatch-plugin.zip" .)
+          for dir in plugins/openlatch/skills/*/; do
+            name=$(basename "$dir")
+            if [[ "$name" == "openlatch-plugin" ]]; then
+              echo "::error::a skill folder cannot be named openlatch-plugin, it would overwrite the plugin archive"
+              exit 1
+            fi
+            (cd plugins/openlatch/skills && zip -X -D -r -q "$dist/$name.zip" "$name")
+          done
+
+          # The shapes claude.ai accepts: the plugin archive holds one manifest at its root, a skill archive holds
+          # its folder at the top and exactly one SKILL.md.
+          plugin_roots=$(unzip -Z1 "$dist/openlatch-plugin.zip" | grep -cx '\.claude-plugin/plugin\.json' || true)
+          plugin_any=$(unzip -Z1 "$dist/openlatch-plugin.zip" | grep -cE '(^|/)\.claude-plugin/plugin\.json$' || true)
+          if [[ "$plugin_roots" != "1" || "$plugin_any" != "1" ]]; then
+            echo "::error::openlatch-plugin.zip must hold exactly one .claude-plugin/plugin.json, at its root"
+            exit 1
+          fi
+          skills=0
+          for archive in "$dist"/*.zip; do
+            name=$(basename "$archive" .zip)
+            [[ "$name" != "openlatch-plugin" ]] || continue
+            skills=$((skills + 1))
+            outside=$(unzip -Z1 "$archive" | grep -cv "^$name/" || true)
+            manifests=$(unzip -Z1 "$archive" | grep -cx "$name/SKILL\.md" || true)
+            if [[ "$outside" != "0" || "$manifests" != "1" ]]; then
+              echo "::error::$name.zip must hold only $name/ and exactly one SKILL.md"
+              exit 1
+            fi
+          done
+          if [[ "$skills" -lt 1 ]]; then
+            echo "::error::no skill archive was built"
+            exit 1
+          fi
+
+          notes="OpenLatch $VERSION. Claude Code: /plugin marketplace add OpenLatch/openlatch-plugins. claude.ai: Customize > Plugins > Add > Add marketplace, or upload an archive below. Codex: a workspace admin imports this repository."
+          gh release create "$tag" --draft --target "$GITHUB_SHA" --title "OpenLatch $VERSION" --notes "$notes"
+          gh release upload "$tag" "$dist"/*.zip
+          assets=$(gh api "repos/$GH_REPO/releases?per_page=100" \
+            | jq -r --arg t "$tag" '[.[] | select(.tag_name == $t and .draft)] | first | .assets | length')
+          expected=$((skills + 1))
+          if [[ "$assets" != "$expected" ]]; then
+            echo "::error::the draft $tag holds $assets assets, expected $expected (one per skill plus the plugin); it stays a draft"
+            exit 1
+          fi
+          gh release edit "$tag" --draft=false "$latest"
