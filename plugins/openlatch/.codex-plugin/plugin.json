@@ -1,0 +1,29 @@
+{
+  "author": {
+    "name": "OpenLatch",
+    "url": "https://openlatch.ai"
+  },
+  "description": "OpenLatch skills and MCP server for your AI agent: triage anomalies and Asks, manage agents and zones.",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "category": "Productivity",
+        "developerName": "OpenLatch",
+        "displayName": "OpenLatch",
+        "shortDescription": "Triage and manage your AI agents' execution control",
+        "websiteURL": "https://openlatch.ai"
+      }
+    }
+  },
+  "interface": {
+    "category": "Productivity",
+    "developerName": "OpenLatch",
+    "displayName": "OpenLatch",
+    "shortDescription": "Triage and manage your AI agents' execution control",
+    "websiteURL": "https://openlatch.ai"
+  },
+  "mcpServers": "./.mcp.json",
+  "name": "openlatch",
+  "skills": "./skills/",
+  "version": "1.1.2"
+}
