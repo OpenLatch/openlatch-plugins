@@ -1,0 +1,20 @@
+{
+  "interface": {
+    "displayName": "OpenLatch"
+  },
+  "name": "openlatch",
+  "plugins": [
+    {
+      "category": "Productivity",
+      "name": "openlatch",
+      "policy": {
+        "authentication": "ON_INSTALL",
+        "installation": "AVAILABLE"
+      },
+      "source": {
+        "path": "./plugins/openlatch",
+        "source": "local"
+      }
+    }
+  ]
+}
