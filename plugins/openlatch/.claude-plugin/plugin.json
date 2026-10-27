@@ -6,7 +6,8 @@
   "description": "OpenLatch skills and MCP server for your AI agent: triage anomalies and Asks, manage agents and zones.",
   "displayName": "OpenLatch",
   "homepage": "https://docs.openlatch.ai/guides/agents/mcp-setup/",
+  "icon": "./assets/icon.png",
   "license": "Apache-2.0",
   "name": "openlatch",
-  "version": "1.1.0"
+  "version": "1.1.1"
 }

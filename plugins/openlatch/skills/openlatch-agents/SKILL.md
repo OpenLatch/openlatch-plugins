@@ -4,7 +4,7 @@ description: Use to find and manage the OpenLatch agent record - look up agents,
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # OpenLatch agents
