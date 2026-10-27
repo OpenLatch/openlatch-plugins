@@ -2,7 +2,10 @@
 #
 # Runs Claude Code's own plugin validator over the repository and checks the
 # portable plugin manifest and MCP configuration against their published JSON
-# schemas. It reads the repository and holds no secret.
+# schemas, and on a pull request refuses a change to the plugin that does not
+# raise its version: the release runs on a version change only, so such a change
+# would reach main and never be published. It reads the repository and holds no
+# secret.
 
 name: Validate
 
@@ -23,7 +26,36 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
+
+      - name: A change to the plugin raises its version
+        if: github.event_name == 'pull_request'
+        # HEAD is the merge commit with today's main, and its first parent is that main:
+        # the event's base sha goes stale once main moves, the merge commit never does.
+        # A version is plain semver, the only form the release accepts.
+        run: |
+          set -euo pipefail
+          manifest=plugins/openlatch/.claude-plugin/plugin.json
+          if git diff --quiet HEAD^1 HEAD -- plugins/openlatch; then
+            echo "the plugin is unchanged"
+            exit 0
+          fi
+          head=$(jq -r '.version // empty' "$manifest")
+          if [[ ! "$head" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::$manifest version is not a plain semver: $head"
+            exit 1
+          fi
+          if ! git cat-file -e "HEAD^1:$manifest" 2>/dev/null; then
+            echo "the plugin is new at $head"
+            exit 0
+          fi
+          base=$(git show "HEAD^1:$manifest" | jq -r '.version // empty')
+          if [[ "$base" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && ( "$head" == "$base" || "$(printf '%s\n%s\n' "$base" "$head" | sort -V | tail -n1)" != "$head" ) ]]; then
+            echo "::error::the plugin changed but its version did not rise above $base (now $head)"
+            exit 1
+          fi
+          echo "the plugin version rises from $base to $head"
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
