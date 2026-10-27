@@ -2,13 +2,18 @@
 
 ## Modes
 
+A mode belongs to a policy's **attachment to a zone**, never to a single intent policy inside it. The same policy
+can be attached to several zones, each with its own mode, and changing one attachment leaves the others as they are.
+An agent runs a policy at the strictest mode among the attachments on its path, its own zone and every ancestor
+zone: a Disabled attachment does not stop a policy that an ancestor zone runs in Monitor or Enforce.
+
 | Mode | Effect |
 | ---- | ------ |
-| Disabled | The policy does not run |
+| Disabled | The attachment is switched off. The policy still runs in that zone when an ancestor attaches it in Monitor or Enforce |
 | Monitor | The policy evaluates and records; it never intervenes. Verdicts that would have acted are flagged |
 | Enforce | The verdict is applied before the action executes |
 
-Customers graduate a policy from Monitor to Enforce. OpenLatch never widens an agent's authority on its own.
+Customers graduate a policy from Monitor to Enforce, zone by zone. OpenLatch never widens an agent's authority on its own.
 
 ## Verdicts
 
@@ -31,4 +36,4 @@ more than one.
 ## Anomalies
 
 An anomaly is an agent action that violated an intent policy. It carries the policy, the dimension, the verdict
-and the mode the policy was in. Triage is in the `openlatch-triage` skill.
+and the mode of the policy's attachment at the time. Triage is in the `openlatch-triage` skill.
