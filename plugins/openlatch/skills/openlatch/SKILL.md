@@ -4,7 +4,7 @@ description: Use for OpenLatch through its MCP server - Autonomy Zone, intent po
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.1.3"
+  version: "1.2.0"
 ---
 
 # OpenLatch
@@ -58,19 +58,21 @@ Every covered action gets one verdict before it runs: Allow, Ask, Block or Optim
 | -- | --- |
 | Know who you act as | `whoami` |
 | See the org tree and its zones | `org_tree_read`, `zones_read` |
-| Read intent policies | `policies_read` |
+| Read intent policies, or a past version of one | `policies_read` |
+| Author, edit or restore an intent policy | the `openlatch-autonomy-zones` skill |
 | Change how an existing policy runs | `policies_write` |
 | Assign a zone, change the tree | `zones_write` |
 | Anomalies, Asks, holds | the `openlatch-triage` skill |
 | The agent record, sessions, ownership | the `openlatch-agents` skill |
 | Anything else in the public API | `search_operations`, `describe_operation`, then `call_read` |
 
-## The boundary
+## What changes a policy
 
-Writing or ratifying a new intent policy, and applying a preset, are not available through MCP yet. Tell the user
-to do it in the OpenLatch console. Never try `call_write` or any other tool to get around this.
+Authoring a new intent policy, editing a ratified one and restoring an earlier version go through the
+`openlatch-autonomy-zones` skill: the user approves the exact sentences before anything is put in force. Never use
+`call_write` to ratify.
 
-Two writes are available:
+Two other writes are available here:
 
 1. **Changing how an existing policy runs.** Read it with `policies_read`, show the user its sentences, then call
    `policies_write` with the `version` you read. A missing or stale version is refused. See

@@ -9,4 +9,4 @@
 6. Report what changed, in one line.
 
 Repeated anomalies of one policy can mean the policy is too broad. Say so; changing it is the user's decision,
-made through `policies_write` after reading it, or in the console for anything else.
+made through `policies_write` after reading it, or by authoring a new version with the `openlatch-autonomy-zones` skill.

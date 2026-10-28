@@ -22,4 +22,4 @@ the mode you mean.
 
 `policies_write` also attaches a ratified policy to a zone (`attach`), removes one attachment (`detach`), promotes
 an attachment to Enforce from an anomaly (`promote`) and retires a policy (`retire`); read its description before
-using one, and confirm with the user first. A new policy, or a preset, is made in the console.
+using one, and confirm with the user first. A new policy, or a preset, starts a draft: use the `openlatch-autonomy-zones` skill.
