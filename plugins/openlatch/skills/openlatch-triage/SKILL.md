@@ -4,7 +4,7 @@ description: Use to review OpenLatch anomalies, Asks and held tool calls - list 
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.1.1"
+  version: "1.1.3"
 ---
 
 # OpenLatch triage

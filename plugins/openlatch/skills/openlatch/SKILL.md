@@ -4,7 +4,7 @@ description: Use for OpenLatch through its MCP server - Autonomy Zone, intent po
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.1.1"
+  version: "1.1.3"
 ---
 
 # OpenLatch
@@ -50,7 +50,7 @@ Every covered action gets one verdict before it runs: Allow, Ask, Block or Optim
 - **Monitor** records and flags what a policy would have done; it never intervenes. Always say which mode you mean.
 - **Holding** is a setting of the zone, its Ask behaviour: *pass and review next time* or *hold until validated*,
   inherited down the zone tree and overridable per policy. A hold waits on Claude Code, holds by retry on Cline,
-  and becomes allow-and-flag on Codex CLI, Cursor and OpenCode.
+  and becomes allow-and-flag on Codex CLI, Cursor, OpenCode, GitHub Copilot and Devin.
 
 ## Which tool when
 
