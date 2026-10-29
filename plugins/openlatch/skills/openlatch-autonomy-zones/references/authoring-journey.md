@@ -4,7 +4,7 @@
 
 | Step | Tool and method | You get |
 | ---- | --------------- | ------- |
-| Limits | `drafts_read` `metadata` | The entries you can start from, the limits, whether speech is available |
+| Limits | `drafts_read` `metadata` | The entries you can start from, the limits, whether speech is available; refused with `AI_NOT_ENABLED` when AI authoring is off |
 | Brief | `drafts_write` `paste` | A `source` with its `id`: the text is kept as written |
 | Draft | `drafts_write` `create` | A `public_id` and the `job_id` of the grounding job (`null` for a built-in preset while AI authoring is off) |
 | Read | `drafts_read` `get` | The draft: `revision`, `zone_ids`, `mode`, `preparation`, its intent policies with sentence, `capability`, `cards`, `cases`, `confirmed`, and the `replay` |

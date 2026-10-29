@@ -4,7 +4,7 @@ description: Use for OpenLatch through its MCP server - Autonomy Zone, intent po
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.2.1"
+  version: "1.2.2"
 ---
 
 # OpenLatch
