@@ -4,7 +4,7 @@ description: Use for OpenLatch through its MCP server - Autonomy Zone, intent po
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
 ---
 
 # OpenLatch
@@ -45,8 +45,12 @@ Every covered action gets one verdict before it runs: Allow, Ask, Block or Optim
 
 - **Ask** allows the action and flags it for asynchronous review by default. On Codex CLI it surfaces as a message
   and the call proceeds. It prevents recurrence, not the first occurrence.
-- **Optimize** is the fourth verdict word and is not available in this release: no action gets an Optimize
-  verdict. A past Optimize decision may still appear, labelled. Never offer it as something OpenLatch can do now.
+- **Optimize** steers the agent to a better path. An owner ratifies an Optimize rule with its steer text beside the
+  sentence; a client at 0.8.1 or later enforces it. In Enforce the action is denied through the agent's native hook
+  and the agent receives the ratified sentence and the steer as its reason, as with a Block; in Monitor the action
+  runs and the would-have Optimize is recorded. A repeated action is steered at most twice, then settles by the
+  policy's fallback (Ask by default). On model requests Optimize is measured only: OpenLatch records whether it
+  would have changed a request and never changes one. Never claim the agent follows the steer.
 - **Monitor** records and flags what a policy would have done; it never intervenes. Always say which mode you mean.
 - **Holding** is a setting of the zone, its Ask behaviour: *pass and review next time* or *hold until validated*,
   inherited down the zone tree and overridable per policy. A hold waits on Claude Code, holds by retry on Cline,
