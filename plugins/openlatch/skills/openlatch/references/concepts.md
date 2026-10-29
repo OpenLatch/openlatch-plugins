@@ -22,7 +22,7 @@ Customers graduate a policy from Monitor to Enforce, zone by zone. OpenLatch nev
 | Allow | The action proceeds |
 | Ask | The action is allowed and flagged for asynchronous review. Holding for an answer is the zone's Ask behaviour (*hold until validated*), inherited down the zone tree and overridable per policy; where the agent has no native ask, a hold becomes allow-and-flag. On Claude Code the agent's native ask is used |
 | Block | The action does not run |
-| Optimize | Not available in this release: no action gets an Optimize verdict. A past Optimize decision may still appear, labelled |
+| Optimize | The action is denied and the agent receives the ratified sentence and the steer, the better path, as its reason (Enforce); in Monitor the action runs and the would-have Optimize is recorded. A repeated action is steered at most twice, then settles by the policy's fallback (Ask by default). On model requests it is measured only: a request is never changed |
 
 A verdict is deterministic because an explicit policy produced it. Every covered action reaches the decision
 point. Never state a latency figure and never claim overall agent safety.
