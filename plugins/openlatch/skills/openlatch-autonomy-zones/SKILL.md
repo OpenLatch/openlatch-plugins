@@ -4,7 +4,7 @@ description: Use to author, edit or restore an OpenLatch intent policy with the 
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.2.1"
+  version: "1.2.2"
 ---
 
 # Author an intent policy
@@ -16,9 +16,9 @@ the user decides. Read the `openlatch` skill first for the concepts and the conn
 ## Before you start
 
 1. Run the connect check of the `openlatch` skill (`whoami`). Authoring needs the editor role or above.
-2. Call `drafts_read` with method `metadata`. It lists the ways to start a draft and the limits, and says whether AI
-   authoring is on. If it is off, start from a built-in preset (`drafts_read` method `presets`); a pasted brief
-   is refused with `AI_NOT_ENABLED`.
+2. Call `drafts_read` with method `metadata`. It lists the ways to start a draft and the limits. It is refused
+   with `AI_NOT_ENABLED` when AI authoring is off, so an answer means it is on. If it is off, start from a built-in
+   preset (`drafts_read` method `presets`); a pasted brief is refused the same way.
 3. Pick the zone the policy is for with `org_tree_read` and `zones_read`, and ask the user if it is not clear.
 
 ## The journey
@@ -29,7 +29,7 @@ drafts_write paste (the brief's text)  ->  drafts_write create (source_id, zone_
    or drafts_read presets              ->  drafts_write create (preset, zone_id)
 drafts_read get
 for each intent policy:
-   ask the user each interview card  ->  drafts_write answer
+   ask the user each interview card  ->  drafts_write answer (card_key, choice accept or change)
    ask "Is that right?"              ->  drafts_write patch_policy (confirmed)
 drafts_write set_zones (zone_ids, mode)
 drafts_write prepare (revision)  ->  poll drafts_read job
@@ -45,7 +45,9 @@ or `failed`; never wait on one inside a call. Read the draft again with `drafts_
 - Ask the user every interview card. Never answer one on their behalf. A card has a recommended answer: show it,
   and send what the user chooses.
 - Ask "Is that right?" for each intent policy, and confirm it with `patch_policy` only after the user says yes.
-- Copy the sentences verbatim from `drafts_read` method `get`. A paraphrase is refused with `SENTENCES_MISMATCH`.
+- Copy the sentences verbatim from `drafts_read` method `get`. A paraphrase is refused with `SENTENCES_MISMATCH`,
+  and so is the sentence of an intent policy that is not confirmed or that the check refused: only the confirmed,
+  unrefused ones are put in force, so leave the others out and tell the user.
 - Before `policies_ratify`, print every sentence it will put in force in your own message, numbered, with its
   dimension, the zone and the mode. The client's permission prompt may shorten them, and the user must be able to
   read the whole of what they approve.

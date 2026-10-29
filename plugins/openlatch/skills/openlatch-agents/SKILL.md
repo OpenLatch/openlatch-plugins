@@ -1,10 +1,10 @@
 ---
 name: openlatch-agents
-description: Use to find and manage the OpenLatch agent record - look up agents, ownership, sessions and execution graphs, assign an agent to a zone, read the org tree.
+description: Use to list the agents connected to OpenLatch and manage their record - owners, zones, sessions and execution graphs, assigning an agent to a zone, the org tree.
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.2.1"
+  version: "1.2.2"
 ---
 
 # OpenLatch agents
