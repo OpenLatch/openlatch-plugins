@@ -4,7 +4,7 @@ description: Use to author, edit or restore an OpenLatch intent policy with the 
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.2.2"
+  version: "1.3.0"
 ---
 
 # Author an intent policy
@@ -57,6 +57,8 @@ or `failed`; never wait on one inside a call. Read the draft again with `drafts_
 - Never use `call_write` to ratify. `policies_ratify` is the one tool that puts intent policies in force.
 - The mode is chosen with the zone (`set_zones`), not per sentence. Say which mode you propose: Monitor records
   what would have happened; Enforce acts.
+- A policy sits in one zone: `zone_ids` names exactly one. Two are refused (`ONE_ZONE_PER_AIP`); for the same rules
+  in another zone, author a separate policy there.
 
 ## Edit and restore
 
