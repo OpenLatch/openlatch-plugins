@@ -2,10 +2,10 @@
 
 ## Modes
 
-A mode belongs to a policy's **attachment to a zone**, never to a single intent policy inside it. The same policy
-can be attached to several zones, each with its own mode, and changing one attachment leaves the others as they are.
-An agent runs a policy at the strictest mode among the attachments on its path, its own zone and every ancestor
-zone: a Disabled attachment does not stop a policy that an ancestor zone runs in Monitor or Enforce.
+A mode belongs to a policy's **attachment to a zone**, never to a single intent policy inside it. A policy is
+attached to **one zone at most**: a second zone is refused (`ONE_ZONE_PER_AIP`), and moving a policy means removing it
+from its zone, then attaching it to the other. The policy applies to the agents of that zone and of every zone
+beneath it; to run the same rules elsewhere in another mode, author a separate policy there.
 
 | Mode | Effect |
 | ---- | ------ |
