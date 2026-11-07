@@ -4,7 +4,7 @@ description: Use for OpenLatch through its MCP server - Autonomy Zone, intent po
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.3.1"
+  version: "1.3.2"
 ---
 
 # OpenLatch
@@ -56,7 +56,8 @@ Every covered action gets one verdict before it runs: Allow, Ask, Block or Optim
   inherited down the zone tree and overridable per policy. A hold waits on Claude Code, holds by retry on Cline,
   and becomes allow-and-flag on Codex CLI, Cursor, OpenCode, GitHub Copilot and Devin. Antigravity asks natively
   when an Ask is delivered to the agent and a person is at the keyboard; in print mode (`agy -p`), and on a surface
-  where a hook cannot wait, a hold becomes allow-and-flag.
+  where a hook cannot wait, a hold becomes allow-and-flag. Pi holds in its terminal UI and over RPC; in print and
+  JSON mode a hold becomes allow-and-flag.
 
 ## Which tool when
 
