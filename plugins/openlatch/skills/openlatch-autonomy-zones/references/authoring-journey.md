@@ -6,7 +6,7 @@
 | ---- | --------------- | ------- |
 | Limits | `drafts_read` `metadata` | The entries you can start from, the limits, whether speech is available; refused with `AI_NOT_ENABLED` when AI authoring is off |
 | Brief | `drafts_write` `paste` | A `source` with its `id`: the text is kept as written |
-| Draft | `drafts_write` `create` | A `public_id` and the `job_id` of the grounding job (`null` for a built-in preset while AI authoring is off) |
+| Draft | `drafts_write` `create` | A `public_id` and the `job_id` of the grounding job (`null` for a built-in preset: it arrives grounded, nothing to poll) |
 | Read | `drafts_read` `get` | The draft: `revision`, `zone_ids`, `mode`, `preparation`, its intent policies with sentence, `capability`, `cards`, `cases`, `confirmed`, and the `replay` |
 | Answer | `drafts_write` `answer` | The intent policy with the card answered. `body`: `card_key` and `choice` (`accept` or `change`, with `values`, `question` or `fallback` as the card asks) |
 | Confirm | `drafts_write` `patch_policy` | The intent policy with `confirmed`. Its `body` may also change the `sentence` or the `dimension`; a changed sentence is grounded again by a job |
