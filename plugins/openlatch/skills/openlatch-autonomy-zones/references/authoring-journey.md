@@ -52,5 +52,5 @@ anything else is reported to the user as it is.
 
 ## After the ratify
 
-Read the policy with `policies_read` method `get` and tell the user its `version` and where it is attached. Changing
+Read the policy with `policies_read` method `get` and tell the user its `version` and the zone it belongs to. Changing
 how it runs later is `policies_write`, described in the `openlatch` skill.

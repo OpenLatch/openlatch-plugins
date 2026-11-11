@@ -4,7 +4,7 @@ description: Use to list the agents connected to OpenLatch and manage their reco
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.3.3"
+  version: "1.4.0"
 ---
 
 # OpenLatch agents

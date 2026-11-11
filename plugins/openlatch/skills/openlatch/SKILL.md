@@ -4,7 +4,7 @@ description: Use for OpenLatch through its MCP server - Autonomy Zone, intent po
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.3.3"
+  version: "1.4.0"
 ---
 
 # OpenLatch
@@ -32,9 +32,9 @@ Code, or **Check for updates** on the marketplace in claude.ai. Do not update an
 | Term | Meaning |
 | ---- | ------- |
 | Autonomy Zone | The operating envelope of what an agent may do. Any node of the org tree may carry a zone; a node without one inherits the nearest ancestor that has one, so each agent resolves to one effective zone |
-| Intent policy | A rule of the zone, stated as a sentence the customer ratified. The sentences written from one brief make an Agent Intent Policy (AIP), which the tools call a policy: the unit that is attached to a zone, versioned and moved between modes |
+| Intent policy | A rule of the zone, stated as a sentence the customer ratified. The sentences written from one brief make an Agent Intent Policy (AIP), which the tools call a policy: the unit that lives in one zone for its whole life, versioned and moved between modes |
 | Dimension | One of five: Quality, Economics, Security, Safety, Compliance |
-| Mode | Disabled, Monitor or Enforce. It belongs to a policy's attachment to its zone, never to one intent policy. A policy sits in one zone at most |
+| Mode | Disabled, Monitor or Enforce. It belongs to a policy's attachment to its zone, never to one intent policy. A policy belongs to one zone for its whole life: delete it, or copy it to another zone |
 | Anomaly | An agent action that violated an intent policy of a dimension |
 
 Read `references/concepts.md` for the verdicts and modes in detail.
