@@ -3,9 +3,10 @@
 ## Modes
 
 A mode belongs to a policy's **attachment to a zone**, never to a single intent policy inside it. A policy is
-attached to **one zone at most**: a second zone is refused (`ONE_ZONE_PER_AIP`), and moving a policy means removing it
-from its zone, then attaching it to the other. The policy applies to the agents of that zone and of every zone
-beneath it; to run the same rules elsewhere in another mode, author a separate policy there.
+in **one zone for its whole life**: a second zone is refused (`ONE_ZONE_PER_AIP`), and a policy never moves. The
+policy applies to the agents of that zone and of every zone beneath it; to run the same rules elsewhere, copy the
+policy to that zone (`policies_write` method `copy`), which makes a new policy with its own history. To stop using
+one, delete it (`policies_write` method `retire`).
 
 | Mode | Effect |
 | ---- | ------ |
