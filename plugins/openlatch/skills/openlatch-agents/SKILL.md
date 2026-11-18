@@ -4,7 +4,7 @@ description: Use to list the agents connected to OpenLatch and manage their reco
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # OpenLatch agents
@@ -27,10 +27,24 @@ Always give the level beside any claim about what OpenLatch does for an agent.
 | To | Use |
 | -- | --- |
 | Find agents | `agents_read` `list` (filters `q`, `zone_id`, `control_level`, `owner`) |
+| Answer a question about the estate | `agents_read` `list` with `query` (and `sort`, `order`); `query_catalog` first |
 | One agent | `agents_read` `get`, `ownership`, `privileges` |
 | Sessions | `agent_sessions_read` `list`, `summary`, `inventory` |
 | Execution graph | `agent_sessions_read` `execution_graph`, `node_events` |
 | Org tree and zones | `org_tree_read`, `zones_read` (`list`, `get`, `agents`, `agent_zone`) |
+
+## Query the agents
+
+`query` takes the agent query the console's inventory runs, so the same text returns the same agents in the same
+order. Read `agents_read` `query_catalog` before writing one, one `scope` at a time: `root` for the agent's own
+properties, then the relation you join (`anomaly`, `session`, …). See `references/agent-query.md`.
+
+```text
+HAS sanction = shadow WITH anomaly HAS dimension = security
+```
+
+A query is checked, never guessed: a refused one comes back `QUERY_INVALID`, and its `details` give the position
+(`span`) and what was `expected` there. Fix that one place and run it again.
 
 ## Change
 
