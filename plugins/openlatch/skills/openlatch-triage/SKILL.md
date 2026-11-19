@@ -4,7 +4,7 @@ description: Use to review OpenLatch anomalies, Asks and held tool calls - list 
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.6.0"
+  version: "1.8.0"
 ---
 
 # OpenLatch triage
@@ -38,7 +38,7 @@ Filters differ by list. Page through large lists.
 | Answer an Ask or snooze it | `answer_ask`, `snooze_ask` (24 hours, the only length: `body` `hours: 24`) |
 | Answer a held call | `answer_hold` |
 
-An answer's `scope` is `exact_action`, `rule_agent` or `rule_zone`. The Ask's `scope_proposals`
+An answer's `scope` is `exact_action`, `resource_class`, `rule_agent` or `rule_zone`. The Ask's `scope_proposals`
 suggest which fit; a scope its evidence cannot support is refused with `SCOPE_UNAVAILABLE`.
 
 Read the item with `anomalies_read` or `asks_read`, state what you will answer and why, and wait for the user's

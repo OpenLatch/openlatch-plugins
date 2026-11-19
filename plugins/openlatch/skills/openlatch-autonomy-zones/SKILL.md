@@ -4,7 +4,7 @@ description: Use to author, edit or restore an OpenLatch intent policy with the 
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.6.0"
+  version: "1.8.0"
 ---
 
 # Author an intent policy
@@ -70,6 +70,12 @@ or `failed`; never wait on one inside a call. Read the draft again with `drafts_
   that `version` in the body. It opens an edit draft that carries the ratified sentences; change what the user asks
   for, then run the same journey from the interview on. Another person may already hold an edit draft
   (`DRAFT_EXISTS`, with `held_by`): tell the user who.
+- **Continue or discard any draft.** Any editor writes to or discards any draft, whichever channel opened it (the
+  console, the API or an agent): there is no lock and no holder. Tell the user whose draft it is before discarding
+  it. A discard of an edit draft is recorded in the policy's history and in Audit, naming who discarded it.
+- **A draft needs a zone.** `drafts_write` `create` takes a `zone_id`, and `set_zones` never empties it: a
+  never-ratified draft refuses no zone (`NO_ZONE`), an edit draft keeps its policy's zone (`ZONE_FIXED`). To find a
+  zone's drafts that nobody ratified, use `drafts_read` method `list` with the `zone_id`.
 - **Restore** an earlier version: `policies_read` method `version` with the `public_id` and the `version` in
   `params`, show the user its sentences, then `policies_ratify` method `restore` with that `version` and those
   sentences. The restore makes a new version; it does not rewrite history.
