@@ -4,7 +4,7 @@ description: Use to author, edit or restore an OpenLatch intent policy with the 
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.5.1"
+  version: "1.6.0"
 ---
 
 # Author an intent policy
@@ -26,7 +26,7 @@ the user decides. Read the `openlatch` skill first for the concepts and the conn
 ```
 drafts_read metadata
 drafts_write paste (the brief's text)  ->  drafts_write create (source_id, zone_id)  ->  poll drafts_read job
-   or drafts_read presets              ->  drafts_write create (preset, zone_id)
+   or drafts_read presets (key)        ->  drafts_write create (preset, zone_id)
 drafts_read get
 for each intent policy:
    ask the user each interview card  ->  drafts_write answer (card_key, choice accept or change)
@@ -36,6 +36,9 @@ drafts_write prepare (revision)  ->  poll drafts_read job
 drafts_read get: show the sentences, the failing cases, the replay
 policies_ratify draft (public_id, revision, sentences)    <- the user approves this call
 ```
+
+Read a preset one at a time: `drafts_read` method `presets` with its `key` (the keys are in the authoring journey
+reference). The whole list is too large to return in one answer.
 
 A write that starts a job answers with a `job_id`. Poll it with `drafts_read` method `job` until it is `succeeded`
 or `failed`; never wait on one inside a call. Read the draft again with `drafts_read` method `get` after each job.
