@@ -31,6 +31,7 @@ Pass one of these as `key` to `drafts_read` method `presets` to read that preset
 | `ffiec` | FFIEC IT Handbook |
 | `iosco` | IOSCO Supervisory Toolkit |
 | `iso-42001` | ISO/IEC 42001:2023 |
+| `mitre-atlas` | MITRE ATLAS |
 | `nist-ai-600-1` | NIST AI 600-1 |
 | `nist-sp-800-53` | NIST SP 800-53 Rev. 5 |
 | `owasp-ml` | OWASP Machine Learning Security Top Ten |
@@ -46,7 +47,7 @@ Pass one of these as `key` to `drafts_read` method `presets` to read that preset
 | `DRAFT_NOT_PREPARED` | The draft was not prepared at this revision | `drafts_write` `prepare`, poll the job, then ratify |
 | `DRAFT_REVISION_STALE` | The draft changed since the revision you sent | Read it again, show the user what changed, and use the new `revision` |
 | `EDIT_DRAFT_STALE` | The ratified policy changed since the edit draft opened | Read the policy again; open a new edit draft if the user still wants the change |
-| `DRAFT_EXISTS` | Someone holds an edit draft of this policy; `held_by` names them | Tell the user who holds it |
+| `NO_ZONE` | The draft names no zone, or the policy to edit is in no zone | Choose a zone for a new draft; a policy in no zone cannot be edited |
 | `AI_NOT_ENABLED` | AI authoring is off for the organization | Start from a built-in preset instead |
 | `PREPARATION_TIMED_OUT` | The `error.code` of a `prepare` job that ran too long | Tell the user; do not retry in a loop |
 | `FORBIDDEN` | The user's role does not allow authoring | Say which role is needed and ask an organization admin |
