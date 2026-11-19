@@ -18,6 +18,25 @@
 An intent policy whose `capability` is `refuse` cannot be enforced; its `refusal` says why. Show it to the user and
 leave it out: it is not sent in `sentences`. Send only the confirmed, ratifiable sentences; an unconfirmed intent policy is left out too.
 
+## Built-in preset keys
+
+Pass one of these as `key` to `drafts_read` method `presets` to read that preset, and as `preset.key` to `drafts_write`
+`create`. Framework presets are listed for organizations that have them.
+
+| Key | Title |
+| --- | ----- |
+| `examples` | Examples |
+| `atr` | Agent Threat Rules |
+| `eu-ai-act` | EU AI Act |
+| `ffiec` | FFIEC IT Handbook |
+| `iosco` | IOSCO Supervisory Toolkit |
+| `iso-42001` | ISO/IEC 42001:2023 |
+| `nist-ai-600-1` | NIST AI 600-1 |
+| `nist-sp-800-53` | NIST SP 800-53 Rev. 5 |
+| `owasp-ml` | OWASP Machine Learning Security Top Ten |
+| `owasp-agentic` | OWASP Top 10 for Agentic Applications |
+| `owasp-llm` | OWASP Top 10 for LLM Applications |
+
 ## When a call is refused
 
 | Code | Meaning | Do |

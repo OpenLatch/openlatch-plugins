@@ -29,5 +29,5 @@
   "mcpServers": "./.mcp.json",
   "name": "openlatch",
   "skills": "./skills/",
-  "version": "1.5.1"
+  "version": "1.6.0"
 }
