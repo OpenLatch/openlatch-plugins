@@ -8,6 +8,7 @@
 | Brief | `drafts_write` `paste` | A `source` with its `id`: the text is kept as written |
 | Draft | `drafts_write` `create` | A `public_id` and the `job_id` of the grounding job (`null` for a built-in preset: it arrives grounded, nothing to poll) |
 | Read | `drafts_read` `get` | The draft: `revision`, `zone_ids`, `mode`, `preparation`, its intent policies with sentence, `capability`, `cards`, `cases`, `confirmed`, and the `replay` |
+| Read a large draft | `drafts_read` `get` with `params: {projection: "summary"}` | The same draft with every intent policy's `cases` empty and its `case_count` instead. Use it when `get` is refused as too large, as it often is for a framework preset: it gives each intent policy's `id` to answer and confirm it |
 | Answer | `drafts_write` `answer` | The intent policy with the card answered. `body`: `card_key` and `choice` (`accept` or `change`, with `values`, `question` or `fallback` as the card asks) |
 | Confirm | `drafts_write` `patch_policy` | The intent policy with `confirmed`. Its `body` may also change the `sentence` or the `dimension`; a changed sentence is grounded again by a job |
 | Zones | `drafts_write` `set_zones` | The draft with its `zone_ids` and `mode` |
