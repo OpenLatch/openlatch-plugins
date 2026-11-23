@@ -4,7 +4,7 @@ description: Use to author, edit or restore an OpenLatch intent policy with the 
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.10.0"
+  version: "1.10.1"
 ---
 
 # Author an intent policy
@@ -44,7 +44,13 @@ If `get` is refused as too large, as it often is for a framework preset draft, r
 `params: {projection: "summary"}` and confirm each intent policy from that read (see the authoring journey reference).
 
 A write that starts a job answers with a `job_id`. Poll it with `drafts_read` method `job` until it is `succeeded`
-or `failed`; never wait on one inside a call. Read the draft again with `drafts_read` method `get` after each job.
+or `failed`; never wait on one inside a call. Between polls, never run a standalone foreground shell `sleep` (clients
+such as Claude Code block standalone `sleep` commands): start a short wait with a background shell command
+(`run_in_background: true`) or the client's own wait or scheduler tool, then stop and poll `drafts_read` `job` again
+once its completion notification arrives. Inside a foreground subagent (such as a Claude Code subagent), ending a turn
+kills background shell waits — use a native wait tool if available, or return the `job_id` to the parent session to
+poll. If background waits are unavailable or refused, tell the user the job is still running and ask before polling
+again. Read the draft again with `drafts_read` method `get` after each job.
 
 ## Rules
 

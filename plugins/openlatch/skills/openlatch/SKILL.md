@@ -4,7 +4,7 @@ description: Use for OpenLatch through its MCP server - Autonomy Zone, intent po
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.10.0"
+  version: "1.10.1"
 ---
 
 # OpenLatch
@@ -87,6 +87,16 @@ Two other writes are available here:
 2. **Assigning a zone** with `zones_write`.
 
 Writes keep the agent's permission prompt. Wait for the user's yes before any of them.
+
+If the client blocks a write tool in auto mode (for example Claude Code's `blocked by auto mode · /permissions`), do
+not retry in a loop and do not edit permission settings yourself. Explain why the write was blocked and give the user
+their choices: switch out of auto mode so they can approve each write interactively, or add an explicit `ask` rule in
+`/permissions` scoped to the blocked write tool's **Full name** from `/mcp` (for example
+`mcp__plugin_openlatch_openlatch__drafts_write` for the plugin install or `mcp__openlatch__drafts_write` for a direct
+server registration — not the `/mcp` display name `plugin:openlatch:openlatch`, and not a server-wide wildcard, which
+would prompt on read-only polls such as `drafts_read` `job`). Do not recommend an `allow` rule: a tool-level allow
+skips the per-call prompt for every method of that tool, including destructive actions such as deleting a draft, and
+`policies_ratify` and live policy or zone writes must keep interactive approval.
 
 ## Captured content
 
