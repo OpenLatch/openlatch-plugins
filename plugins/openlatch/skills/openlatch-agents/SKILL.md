@@ -4,7 +4,7 @@ description: Use to list OpenLatch agents and manage their record - owners, zone
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.10.0"
+  version: "1.10.1"
 ---
 
 # OpenLatch agents

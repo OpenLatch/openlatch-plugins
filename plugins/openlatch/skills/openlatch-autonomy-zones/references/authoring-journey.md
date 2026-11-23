@@ -16,6 +16,12 @@
 | Replay | `drafts_write` `replay` | A `job_id`: replays the draft against recorded actions |
 | Ratify | `policies_ratify` `draft` | The ratified policy, or a refusal below |
 
+Between `drafts_read` `job` polls, do not run a standalone foreground shell `sleep`: start a background wait
+(`run_in_background: true`) or use the client's native wait/scheduler tool and poll again after its completion
+notification arrives. Inside a foreground subagent, ending a turn kills background shell waits: use a native wait tool
+there, or return the `job_id` to the parent session to poll. If background waits are unavailable or refused, tell the
+user the job is still running and ask before polling again.
+
 An intent policy whose `capability` is `refuse` cannot be enforced; its `refusal` says why. Show it to the user and
 leave it out: it is not sent in `sentences`. Send only the confirmed, ratifiable sentences; an unconfirmed intent policy is left out too.
 
