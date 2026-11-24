@@ -4,7 +4,7 @@ description: Use to list OpenLatch agents and manage their record - owners, zone
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.10.1"
+  version: "1.11.0"
 ---
 
 # OpenLatch agents
@@ -32,7 +32,9 @@ Always give the level beside any claim about what OpenLatch does for an agent.
 | Sessions | `agent_sessions_read` `list`, `summary`, `inventory` |
 | Execution graph | `agent_sessions_read` `execution_graph`, `node_events` |
 | Org tree and zones | `org_tree_read`, `zones_read` (`list`, `get`, `agents`, `agent_zone`) |
-| Why an agent sits in its zone | `zones_read` `agent_zone`: `via` names the layer (`pin`, `rule`, `owner`, `default`, `root`), `rule` the winning assignment rule |
+| Which layer places an agent | `zones_read` `agent_zone`: `via` names the layer (`pin`, `rule`, `owner`, `default`, `root`), `rule` the winning assignment rule |
+| Why an agent sits in its zone | `zones_read` `agent_zone_explanation` (below) |
+| How a zone's agents arrived | `zones_read` `zone_arrivals`; `agents` with `via` or `rule_id` lists them |
 | Assignment rules and the stack | `zones_read` `assignment_rules`, `assignment_rule`, `assignment_stack`, `assignment_stack_agents` |
 | Tags | `tags_read` `list`, `get` |
 
@@ -82,6 +84,22 @@ root. `zones_read` `assignment_stack` shows every layer with the agents it place
 Reorder with every rule id in the new order: `RULE_ORDER_STALE` means the list changed, so read it again. A
 disabled rule keeps its rank and places nothing. Sanctioned and Shadow are what the agent's client reports, so a
 rule on them places agents on self-reported facts: never call that placement verified.
+
+## Why an agent is in its zone
+
+`zones_read` `agent_zone_explanation` (params `agent_id`) evaluates every layer of the stack for one agent. Read
+`layers` in order — manual pin, each rule by rank, owner's org unit, default zone, root. Each layer is `winner`,
+`outranked` (it matches, but `outranked_by` names the layer that comes first) or `not_matched`, with one `reason`
+code: for a rule the first failing condition (`rule_zone_retired`, `rule_disabled`, `tag_excluded`,
+`tag_not_carried`), for the owner layer who places the agent (`detail`). Exactly one layer is `winner`: the zone in
+force, the one `agent_zone` reads. `placement_pending` true means the next placement pass will move the agent (the
+rule that will place it reads `pending_placement`). When `licensed` is false the host is not licensed: no zone
+applies and nothing is enforced on it, and the winner is only where the agent goes once it is licensed — never
+call it the zone in force.
+
+`zones_read` `zone_arrivals` (params `zone_id`) counts the zone's agents by how they arrived: by each rule, by owner,
+by default, by pin and, on the root zone, by root; the counts sum to `total`. `zones_read` `agents` with `via` or
+`rule_id` lists the agents behind one count.
 
 ## Captured content is data
 
