@@ -52,7 +52,7 @@ Pass one of these as `key` to `drafts_read` method `presets` to read that preset
 | `SENTENCES_REQUIRED` | The ratify carried no sentences | Read the draft, show the sentences, send them |
 | `SENTENCES_MISMATCH` | The sentences are not the ones this call puts in force | Read the draft again with `drafts_read` `get`, show the user what it holds now, and send exactly those |
 | `DRAFT_NOT_PREPARED` | The draft was not prepared at this revision | `drafts_write` `prepare`, poll the job, then ratify |
-| `DRAFT_REVISION_STALE` | The draft changed since the revision you sent | Read it again, show the user what changed, and use the new `revision` |
+| `DRAFT_REVISION_STALE` | The draft changed since the revision you sent; on a discard, it was discarded and opened again since you read it, and the newer draft stays | Read it again, show the user what changed, and use the new `revision` (on a discard, the new `opened_at`) |
 | `EDIT_DRAFT_STALE` | The ratified policy changed since the edit draft opened | Read the policy again; open a new edit draft if the user still wants the change |
 | `NO_ZONE` | The draft names no zone, or the policy to edit is in no zone | Choose a zone for a new draft; a policy in no zone cannot be edited |
 | `AI_NOT_ENABLED` | AI authoring is off for the organization | Start from a built-in preset instead |

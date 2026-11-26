@@ -4,7 +4,7 @@ description: Use to list OpenLatch agents and manage their record - owners, zone
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.11.0"
+  version: "1.12.0"
 ---
 
 # OpenLatch agents
@@ -84,6 +84,17 @@ root. `zones_read` `assignment_stack` shows every layer with the agents it place
 Reorder with every rule id in the new order: `RULE_ORDER_STALE` means the list changed, so read it again. A
 disabled rule keeps its rank and places nothing. Sanctioned and Shadow are what the agent's client reports, so a
 rule on them places agents on self-reported facts: never call that placement verified.
+
+## Delete a zone or an org unit
+
+`zones_write` `delete_zone` (params `zone_id`) and `delete_org_unit` (params `unit_id`) take `params`
+`{dry_run: true}`, which changes nothing and returns the impact. `agents_moving` counts every agent whose zone the
+delete changes, whichever layer places it; `destinations` says where they go, one entry per zone and the layer that
+places them there (`pin`, `rule`, `owner`, `default` or `root`), and their counts sum to `agents_moving`.
+`target_zone` is where the zone's intent policies go if the user moves them, not where agents go. Show the user the
+destinations and wait for their yes, then send the same call without `dry_run`: its answer carries the
+`destinations` of the moves it made. On an org unit delete, `moved_agents` counts the agents whose accountable org
+unit moved to the parent; on a zone delete, the agents whose zone changed.
 
 ## Why an agent is in its zone
 
