@@ -4,7 +4,7 @@ description: Use to author, edit or restore an OpenLatch intent policy with the 
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.11.0"
+  version: "1.12.0"
 ---
 
 # Author an intent policy
@@ -73,6 +73,15 @@ again. Read the draft again with `drafts_read` method `get` after each job.
   (`ONE_ZONE_PER_AIP`), and an edit that names another zone is refused (`ZONE_FIXED`). For the same rules in another
   zone, copy the policy there (`policies_write` method `copy`).
 
+## Delete a zone or an org unit
+
+Preview first: `zones_write` `delete_zone` or `delete_org_unit` with `params` `{dry_run: true}` changes nothing and
+returns `agents_moving` (every agent whose zone the delete changes) and `destinations` (where they go, by zone and the
+layer that places them). `target_zone` is where the zone's intent policies go, not where agents go. Show the user the
+destinations, wait for their yes, then send the same call without `dry_run`; its answer carries the `destinations` of
+the moves it made and `moved_agents`: on a zone delete the agents whose zone changed, on an org unit delete the agents
+whose accountable org unit moved to the parent. The `openlatch-agents` skill has the full walk-through.
+
 ## Edit and restore
 
 - **Edit** a ratified policy: `policies_read` method `get` for its `version`, then `drafts_write` method `edit` with
@@ -82,6 +91,10 @@ again. Read the draft again with `drafts_read` method `get` after each job.
 - **Continue or discard any draft.** Any editor writes to or discards any draft, whichever channel opened it (the
   console, the API or an agent): there is no lock and no holder. Tell the user whose draft it is before discarding
   it. A discard of an edit draft is recorded in the policy's history and in Audit, naming who discarded it.
+- **Discard only the draft you read.** `drafts_write` method `delete` needs `params` `opened_at`: the draft's
+  `opened_at` exactly as `drafts_read` `get` (or the policy's `open_draft`) gave it. Without it the call is refused.
+  If the draft was discarded and opened again since you read it, the call answers `DRAFT_REVISION_STALE` and the
+  newer draft stays: read it again and ask the user before discarding that one.
 - **A draft needs a zone.** `drafts_write` `create` takes a `zone_id`, and `set_zones` never empties it: a
   never-ratified draft refuses no zone (`NO_ZONE`), an edit draft keeps its policy's zone (`ZONE_FIXED`). To find a
   zone's drafts that nobody ratified, use `drafts_read` method `list` with the `zone_id`.
