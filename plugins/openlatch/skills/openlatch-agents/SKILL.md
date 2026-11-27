@@ -4,7 +4,7 @@ description: Use to list OpenLatch agents and manage their record - owners, zone
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.13.0"
+  version: "1.14.0"
 ---
 
 # OpenLatch agents
@@ -29,7 +29,7 @@ Always give the level beside any claim about what OpenLatch does for an agent.
 | Find agents | `agents_read` `list` (filters `q`, `zone_id`, `control_level`, `owner`) |
 | Answer a question about the estate | `agents_read` `list` with `query` (and `sort`, `order`); `query_catalog` first |
 | One agent | `agents_read` `get`, `ownership`, `privileges` |
-| Sessions | `agent_sessions_read` `list`, `summary`, `inventory` |
+| Sessions | `agent_sessions_read` `list`, `summary`, `inventory` (org-wide; it leaves out the sessions of agents on hosts that are not licensed) |
 | Execution graph | `agent_sessions_read` `execution_graph`, `node_events` |
 | Org tree and zones | `org_tree_read`, `zones_read` (`list`, `get`, `agents`, `agent_zone`) |
 | Which layer places an agent | `zones_read` `agent_zone`: `via` names the layer (`pin`, `rule`, `owner`, `default`, `root`), `rule` the winning assignment rule |
