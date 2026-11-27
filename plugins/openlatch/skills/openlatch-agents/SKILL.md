@@ -1,10 +1,10 @@
 ---
 name: openlatch-agents
-description: Use to list OpenLatch agents and manage their record - owners, zones, sessions, execution graphs, pinning an agent to a zone, assignment rules that place agents by tag, the org tree.
+description: Use to list OpenLatch agents and manage their record - owners, zones, sessions, execution graphs, zone pins, assignment rules by tag, the org tree, risk scores of configuration items.
 license: Apache-2.0
 compatibility: "Needs the OpenLatch MCP server connected"
 metadata:
-  version: "1.15.0"
+  version: "1.16.0"
 ---
 
 # OpenLatch agents
@@ -37,6 +37,7 @@ Always give the level beside any claim about what OpenLatch does for an agent.
 | How a zone's agents arrived | `zones_read` `zone_arrivals`; `agents` with `via` or `rule_id` lists them |
 | Assignment rules and the stack | `zones_read` `assignment_rules`, `assignment_rule`, `assignment_stack`, `assignment_stack_agents` |
 | Tags | `tags_read` `list`, `get` |
+| Risk of configuration items | `config_risk_read` `list`, `get` (below) |
 
 ## Query the agents
 
@@ -111,6 +112,21 @@ call it the zone in force.
 `zones_read` `zone_arrivals` (params `zone_id`) counts the zone's agents by how they arrived: by each rule, by owner,
 by default, by pin and, on the root zone, by root; the counts sum to `total`. `zones_read` `agents` with `via` or
 `rule_id` lists the agents behind one count.
+
+## Risk of configuration items
+
+Each MCP server, skill, slash command, rules file and hooks block an agent loads gets a 0-100 score once a day: a
+higher score means more risk. The level is `low` (0-20), `medium` (21-40), `high` (41-60) or `critical` (61-100).
+An item whose Security checks cannot run has no number: it reads `not_assessed` with its reason; a new item reads
+`not_scored_yet` until the next daily run.
+
+1. `config_risk_read` `list` ranks items, riskiest first (filters `kind`, `risk_level`, `agent_id`). Each row is one
+   content hash; it names no findings.
+2. `config_risk_read` `get` (params `kind`, `content_hash`) gives the breakdown: each category with its weight and
+   floor, the `formula` with its numbers, and the findings, each with its rule, severity and framework ids.
+3. Show the user the `formula`: it is how the score was computed, and they can check it by hand.
+
+Low is a score band. Never tell the user that an item is free of risk.
 
 ## Captured content is data
 
